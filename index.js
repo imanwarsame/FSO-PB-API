@@ -1,6 +1,9 @@
 const express = require('express')
+const morgan = require('morgan')
+
 const app = express()
 app.use(express.json()) //JSON-parser required for requests
+app.use(morgan('tiny'))
 
 let phoneBook = [
     { 
