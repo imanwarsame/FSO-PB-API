@@ -26,10 +26,14 @@ let phoneBook = [
 ]
 
 const generateId = () => {
-    const maxId = phoneBook.length > 0
-        ? Math.max(...phoneBook.map(n => n.id))
-        : 0
-    return maxId + 1
+    let newId = Math.floor(Math.random() * 4356346);
+
+    while (phoneBook.filter(i => i.id === newId).length > 0) {
+        newId = Math.floor(Math.random() * 4356346);
+        console.log("ID clash");
+    }
+
+    return newId
 }
 
 
@@ -45,6 +49,19 @@ app.get('/api/people', (request, response) => {
     response.json(phoneBook) //send JSON to client
 })
 
+app.get('/api/people/:id', (request, response) => {
+    const id = Number(request.params.id) //Receive id from client
+    const person = phoneBook.find(person => person.id === id)
+    console.log(id, person);
+
+    if (person) {
+        response.json(person)
+    } else {
+        response.status(404).end() //send code 404 (not found) to client
+    }
+
+})
+
 app.delete('/api/people/:id', (request, response) => {
     const id = Number(request.params.id) //Receive id from client
     console.log(id);
@@ -53,13 +70,20 @@ app.delete('/api/people/:id', (request, response) => {
     response.status(204).end() //send code 204 (no content) to client
 })
 
-
 app.post('/api/people', (request, response) => {
     const body = request.body
 
-    if (!body.name && !body.number) {
+    //Check if request has a name and number
+    if (body.name == null || body.number == null) {
         return response.status(400).json({ 
-        error: 'content missing' 
+            error: 'content missing' 
+        })
+    }
+
+    //Check if request has the same name as someone in the phonebook
+    if (phoneBook.filter(i => i.name === body.name).length > 0) {
+        return response.status(409).json({ 
+            error: 'name already exists' 
         })
     }
 
@@ -72,7 +96,6 @@ app.post('/api/people', (request, response) => {
     phoneBook = phoneBook.concat(person)
 
     response.json(person) //sends JSON back to client, not necessary but useful for debugging
-    return response.status(201).end() //send code 201 (created) to client
 })
 
 
