@@ -1,9 +1,12 @@
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 
 const app = express()
 app.use(express.json()) //JSON-parser required for requests
 app.use(morgan('tiny'))
+app.use(cors())
+app.use(express.static('build'))
 
 let phoneBook = [
     { 
@@ -93,7 +96,7 @@ app.post('/api/people', (request, response) => {
     const person = {
         id: generateId(),
         name: body.name,
-        important: body.number,
+        number: body.number,
     }
 
     phoneBook = phoneBook.concat(person)
@@ -102,7 +105,8 @@ app.post('/api/people', (request, response) => {
 })
 
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001 //Changed to use PORT 8080 defined in the toml file
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })
