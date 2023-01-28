@@ -1,5 +1,7 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
+const Person = require('./modules/person')
 const cors = require('cors')
 
 const app = express()
@@ -51,22 +53,25 @@ app.get('/info', (request, response) => {
     response.send(infoPage)
 })
 
+
+/* This is a GET request to the server. It is requesting the server to send the phonebook to the
+client. */
 app.get('/api/people', (request, response) => {
-    response.json(phoneBook) //send JSON to client
+    Person.find({}).then(people => {
+        response.json(people) //send JSON to client
+    })
 })
 
+
+/* This is a GET request to the server. It is requesting the server to send a specific person to the
+client. */
 app.get('/api/people/:id', (request, response) => {
-    const id = Number(request.params.id) //Receive id from client
-    const person = phoneBook.find(person => person.id === id)
-    console.log(id, person);
-
-    if (person) {
+    Person.findById(request.params.id).then(person => {
         response.json(person)
-    } else {
-        response.status(404).end() //send code 404 (not found) to client
-    }
-
+    })
 })
+
+
 
 app.delete('/api/people/:id', (request, response) => {
     const id = Number(request.params.id) //Receive id from client
@@ -76,6 +81,10 @@ app.delete('/api/people/:id', (request, response) => {
     response.status(204).end() //send code 204 (no content) to client
 })
 
+
+
+/* This is a POST request to the server. It is requesting the server to add a new person to the
+phonebook. */
 app.post('/api/people', (request, response) => {
     const body = request.body
 
@@ -86,23 +95,17 @@ app.post('/api/people', (request, response) => {
         })
     }
 
-    //Check if request has the same name as someone in the phonebook
-    if (phoneBook.filter(i => i.name === body.name).length > 0) {
-        return response.status(409).json({ 
-            error: 'name already exists' 
-        })
-    }
-
-    const person = {
-        id: generateId(),
+    const person = new Person({
         name: body.name,
         number: body.number,
-    }
+    })
 
-    phoneBook = phoneBook.concat(person)
-
-    response.json(person) //sends JSON back to client, not necessary but useful for debugging
+    person.save().then(savedPerson => {
+        response.json(savedPerson)
+    })
 })
+
+
 
 
 const PORT = process.env.PORT || 3001 //Changed to use PORT 8080 defined in the toml file
