@@ -5,52 +5,38 @@ const Person = require('./modules/person')
 const cors = require('cors')
 
 const app = express()
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    } 
+  
+    next(error)
+}
+  
+
+//Middleware
 app.use(express.json()) //JSON-parser required for requests
 app.use(morgan('tiny'))
 app.use(cors())
 app.use(express.static('build'))
-
-let phoneBook = [
-    { 
-        "id": 1,
-        "name": "Arto Hellas", 
-        "number": "040-123456"
-    },
-    { 
-        "id": 2,
-        "name": "Ada Lovelace", 
-        "number": "39-44-5323523"
-    },
-    { 
-        "id": 3,
-        "name": "Dan Abramov", 
-        "number": "12-43-234345"
-    },
-    { 
-        "id": 4,
-        "name": "Mary Poppendieck", 
-        "number": "39-23-6423122"
-    }
-]
-
-const generateId = () => {
-    let newId = Math.floor(Math.random() * 4356346);
-
-    while (phoneBook.filter(i => i.id === newId).length > 0) {
-        newId = Math.floor(Math.random() * 4356346);
-        console.log("ID clash");
-    }
-
-    return newId
-}
+app.use(errorHandler) //This must be loaded last
 
 
+
+/* This is a GET request to the server. It is requesting the server to send the phonebook and date information to the
+client. */
 app.get('/info', (request, response) => {
-    const infoPage = `
-    <p>Phonebook has info for ${phoneBook.length} people</p>
-    <p>${new Date()}</p>
-    `;
-    response.send(infoPage)
+    Person.countDocuments({}, function( err, count){
+        const infoPage = `
+        <p>Phonebook has info for ${count} people</p>
+        <p>${new Date()}</p>
+        `;
+        response.send(infoPage)
+    })
+
 })
 
 
@@ -67,18 +53,13 @@ app.get('/api/people', (request, response) => {
 client. */
 app.get('/api/people/:id', (request, response) => {
     Person.findById(request.params.id).then(person => {
-        response.json(person)
+        if (person) {
+            response.json(person)
+        } else {
+            response.status(404).end() //This will only run if the id is the correct length, but can't find a match
+        }
     })
-})
-
-
-
-app.delete('/api/people/:id', (request, response) => {
-    const id = Number(request.params.id) //Receive id from client
-    console.log(id);
-    phoneBook = phoneBook.filter(person => person.id !== id)
-
-    response.status(204).end() //send code 204 (no content) to client
+    .catch(error => next(error))
 })
 
 
@@ -106,6 +87,36 @@ app.post('/api/people', (request, response) => {
 })
 
 
+
+/* This is a PUT request to the server. It is requesting the server to update a specific person in the
+phonebook. */
+app.put('/api/people/:id', (request, response, next) => {
+    const body = request.body
+  
+    const person = {
+        name: body.name,
+        number: body.number,
+    }
+
+    //Added the optional new: true parameter which means event handler
+    //will use the new object and not the original. This is important
+    Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(updatedPerson => {
+        response.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+
+
+/* This is a DELETE request to the server. It is requesting the server to delete a specific person from
+the phonebook. */
+app.delete('/api/people/:id', (request, response) => {
+    Person.findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end() //send code 204 (no content) to client
+    })
+    .catch(error => next(error))
+})
 
 
 const PORT = process.env.PORT || 3001 //Changed to use PORT 8080 defined in the toml file
