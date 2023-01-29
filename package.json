@@ -7,7 +7,9 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui": "rd /q /s build && cd ../FSO/part3/phonebook/ && npm run build && xcopy build ..\\..\\..\\FSOAPI\\build /E /H /C /I",
     "deploy": "fly deploy",
+    "deploy:full": "npm run build:ui && npm run deploy",
     "logs:prod": "fly logs"
   },
   "author": "Iman Warsame",
