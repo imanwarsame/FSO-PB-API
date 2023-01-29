@@ -10,11 +10,13 @@
     "build:ui": "rd /q /s build && cd ../FSO/part3/phonebook/ && npm run build && xcopy build ..\\..\\..\\FSOAPI\\build /E /H /C /I",
     "deploy": "fly deploy",
     "deploy:full": "npm run build:ui && npm run deploy",
-    "logs:prod": "fly logs"
+    "logs:prod": "fly logs",
+    "lint": "eslint ."
   },
   "author": "Iman Warsame",
   "license": "MIT",
   "devDependencies": {
+    "eslint": "^8.33.0",
     "nodemon": "^2.0.20"
   },
   "dependencies": {
