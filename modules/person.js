@@ -14,10 +14,18 @@ mongoose.connect(url)
     console.log('error connecting to MongoDB:', error.message)
 })
 
+
 //Set schema to define properties for single person
 const personSchema = new mongoose.Schema({
-    name: String,
-    number: Number,
+  name: {
+    type: String,
+    minLength: 3,
+    required: true
+  },
+  number: {
+    type: Number,
+    required: true
+  },
 })
   
 
